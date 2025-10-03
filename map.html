@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leaflet Map with Lat / Lng Lists</title>
+  <title>Leaflet Map with Many Markers</title>
 
+  <!-- Leaflet CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -26,6 +27,7 @@
 <body>
   <div id="map"></div>
 
+  <!-- Leaflet JS -->
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
@@ -33,6 +35,7 @@
   ></script>
 
   <script>
+    // Helper: get URL parameters
     function getParameterByName(name) {
       name = name.replace(/[\[\]]/g, '\\$&');
       let url = window.location.href;
@@ -43,43 +46,49 @@
       return decodeURIComponent(results[2].replace(/\+/g, ' '));
     }
 
+    // Map center & zoom
     let lat = parseFloat(getParameterByName('lat')) || 0;
     let lng = parseFloat(getParameterByName('lng')) || 0;
     let zoom = parseInt(getParameterByName('zoom')) || 2;
 
     var map = L.map('map').setView([lat, lng], zoom);
 
+    // OSM tile layer
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // NEW PART: get latList and lngList
+    // Custom small marker icon (red dot, ~12x12 px)
+    var smallIcon = L.icon({
+      iconUrl: "https://upload.wikimedia.org/wikipedia/commons/5/59/Red_circle.svg",
+      iconSize: [12, 12],   // good size for zoom 14 with many markers
+      iconAnchor: [6, 6],   // center the circle
+      popupAnchor: [0, -6]  // popup above the dot
+    });
+
+    // Get lat/lng/popup lists from URL
     let latListParam = getParameterByName('latList');
     let lngListParam = getParameterByName('lngList');
-    let popupListParam = getParameterByName('popupList'); // optional
+    let popupListParam = getParameterByName('popupList');
 
     if (latListParam && lngListParam) {
       let latItems = latListParam.split(',').map(s => parseFloat(s));
       let lngItems = lngListParam.split(',').map(s => parseFloat(s));
-      let popupItems = null;
-      if (popupListParam) {
-        // Split popups; these are strings
-        popupItems = popupListParam.split(',');
-      }
+      let popupItems = popupListParam ? popupListParam.split(',') : null;
+
       let count = Math.min(latItems.length, lngItems.length);
       for (let i = 0; i < count; i++) {
         let la = latItems[i];
         let lo = lngItems[i];
         if (!isNaN(la) && !isNaN(lo)) {
-          let marker = L.marker([la, lo]).addTo(map);
+          let marker = L.marker([la, lo], { icon: smallIcon }).addTo(map);
           if (popupItems && popupItems.length > i) {
             marker.bindPopup(popupItems[i]);
           }
         }
       }
     }
-
   </script>
 </body>
 </html>
